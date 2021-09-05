@@ -1,6 +1,11 @@
 const express = require('express')
+var morgan = require('morgan')
 const app = express()
 app.use(express.json())
+
+morgan.token('body', (req, res) => JSON.stringify(req.body));
+app.use(morgan(':method :url :status :response-time ms - :res[content-length] :body'));
+
 let persons = [
     {
         "id": 1,
@@ -68,7 +73,7 @@ app.post('/api/persons', (req, res) => {
         res.json("name must be unique")
     }
     else {
-        res.status(400).json("name and number must be provided")
+        res.status(400).json("error :name and number must be provided")
     }
 
 
