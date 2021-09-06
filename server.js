@@ -21,7 +21,6 @@ const errorHandler = (error, request, response, next) => {
     next(error)
 }
 
-
 app.use(errorHandler)
 
 app.post('/api/persons', (req, res) => {
@@ -41,43 +40,60 @@ app.post('/api/persons', (req, res) => {
     person.save().then(newPerson => {
         res.json(newPerson)
     })
+        .catch(err => console.log(err))
 })
 
 app.get('/api/persons', (req, res) => {
 
     Persons.find({})
         .then(result => { res.json(result) })
+        .catch(err => console.log(err))
 })
 
-// app.get('/info', (req, res) => {
-//     res.send(`<div> PhoneBook has ${persons.length} entries 
-//     <br>
-//     as of ${Date()}</div>`)
-// })
+app.get('/info', (req, res) => {
 
-// app.get('/api/persons/:id', (req, res) => {
-//     const id = Number(req.params.id)
-//     const person = persons.find(person => person.id === id)
-//     if (person) {
-//         res.json(person)
-//     }
-//     else {
-//         res.status(400).json(`person with id=${id} doesn't exist`)
-//     }
+    Persons.count({}, function (err, result) {
+        if (err) {
+            console.log(err);
+        } else {
+            res.send(`<div> PhoneBook has ${result} entries 
+            <br>
+            as of ${Date()}</div>`)
+        }
+    });
 
-// })
+})
 
 app.get('/api/persons/:id', (req, res) => {
     Persons.findById(req.params.id).then(person => {
         res.json(person)
     })
+        .catch(err => console.log(err))
 })
 
-// app.delete('/api/persons/:id', (req, res) => {
-//     const id = Number(req.params.id)
-//     persons = persons.filter(person => person.id !== id)
-//     res.status(204).end()
-// })
+app.put('/api/persons/:id', (req, res) => {
+    console.log("req.body: ", req.body)
+    console.log("req.params.id ", req.params.id)
+
+    var query = { _id: req.params.id }
+    Persons.findOneAndUpdate(query, req.body, { new: true }, function (err, doc) {
+        if (err) { return res.status(500).json("error: ", err) }
+        if (doc === null) {
+            console.log("should have been error", doc)
+            return res.status(500).json("should have been error")
+        }
+        res.send("created succesfully")
+    });
+    // Persons.findOne({ id: req.params.id }).then(doc => {
+    //     doc["number"] = req.body.number;
+    //     doc.save();
+    //     res.json(req.body)
+    // }).catch(err => {
+    //     console.log('Oh! no', err)
+    // });
+})
+
+
 
 app.delete('/api/persons/:id', (request, response, next) => {
 
@@ -87,29 +103,6 @@ app.delete('/api/persons/:id', (request, response, next) => {
         })
         .catch(error => { next(error) })
 })
-
-// app.post('/api/persons', (req, res) => {
-//     const person = req.body
-//     const name = person.name
-//     // const maxId = persons.length > 0
-//     //     ? Math.max(...persons.map(n => n.id))
-//     //     : 0
-//     const flag = (persons.some(p => p.name === name))
-//     if (person.name && person.number && !flag) {
-//         const maxId = Math.floor(Math.random() * 100000000)
-//         person.id = maxId + 1
-//         persons = persons.concat(person)
-//         res.json(person)
-//     }
-//     else if (flag) {
-//         res.json("name must be unique")
-//     }
-//     else {
-//         res.status(400).json("error :name and number must be provided")
-//     }
-
-
-// })
 
 const PORT = process.env.PORT || 3001
 app.listen(PORT, () => {
