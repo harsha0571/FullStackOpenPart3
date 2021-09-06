@@ -2,13 +2,27 @@ const express = require('express')
 const cors = require('cors')
 var morgan = require('morgan')
 const app = express()
+app.use(express.static('build'))
 app.use(express.json())
 require('dotenv').config()
 app.use(cors())
 // morgan.token('body', (req, res) => JSON.stringify(req.body));
 // app.use(morgan(':method :url :status :response-time ms - :res[content-length] :body'));
-app.use(express.static('build'))
+
 const Persons = require('./models/person.model')
+
+const errorHandler = (error, request, response, next) => {
+    console.error(error.message)
+
+    if (error.name === 'CastError') {
+        return response.status(400).send({ error: 'malformatted id' })
+    }
+
+    next(error)
+}
+
+
+app.use(errorHandler)
 
 app.post('/api/persons', (req, res) => {
 
@@ -32,10 +46,7 @@ app.post('/api/persons', (req, res) => {
 app.get('/api/persons', (req, res) => {
 
     Persons.find({})
-        .then(result => {
-            res.json(result)
-        })
-
+        .then(result => { res.json(result) })
 })
 
 // app.get('/info', (req, res) => {
@@ -62,11 +73,19 @@ app.get('/api/persons/:id', (req, res) => {
     })
 })
 
+// app.delete('/api/persons/:id', (req, res) => {
+//     const id = Number(req.params.id)
+//     persons = persons.filter(person => person.id !== id)
+//     res.status(204).end()
+// })
 
-app.delete('/api/persons/:id', (req, res) => {
-    const id = Number(req.params.id)
-    persons = persons.filter(person => person.id !== id)
-    res.status(204).end()
+app.delete('/api/persons/:id', (request, response, next) => {
+
+    Persons.findByIdAndRemove(request.params.id)
+        .then(result => {
+            response.status(204).end()
+        })
+        .catch(error => { next(error) })
 })
 
 // app.post('/api/persons', (req, res) => {
