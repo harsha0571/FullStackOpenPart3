@@ -38,6 +38,7 @@ app.post('/api/persons', (req, res) => {
     })
 
     person.save().then(newPerson => {
+        console.log("user added sucessfully")
         res.json(newPerson)
     })
         .catch(err => console.log(err))
@@ -76,7 +77,7 @@ app.put('/api/persons/:id', (req, res) => {
     console.log("req.params.id ", req.params.id)
 
     var query = { _id: req.params.id }
-    Persons.findOneAndUpdate(query, req.body, { new: true }, function (err, doc) {
+    Persons.findOneAndUpdate(query, req.body, { new: true, runValidators: true, context: 'query' }, function (err, doc) {
         if (err) { return res.status(500).json("error: ", err) }
         if (doc === null) {
             console.log("should have been error", doc)
