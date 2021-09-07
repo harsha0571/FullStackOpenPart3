@@ -11,19 +11,7 @@ app.use(cors())
 
 const Persons = require('./models/person.model')
 
-const errorHandler = (error, request, response, next) => {
-    console.error(error.message)
-
-    if (error.name === 'CastError') {
-        return response.status(400).send({ error: 'malformatted id' })
-    }
-
-    next(error)
-}
-
-app.use(errorHandler)
-
-app.post('/api/persons', (req, res) => {
+app.post('/api/persons', (req, res, next) => {
 
     const body = req.body
 
@@ -37,11 +25,15 @@ app.post('/api/persons', (req, res) => {
 
     })
 
-    person.save().then(newPerson => {
-        console.log("user added sucessfully")
-        res.json(newPerson)
-    })
-        .catch(err => console.log(err))
+    person.save()
+        .then(newPerson => {
+            console.log("user added sucessfully")
+            res.status(200).json(newPerson)
+        })
+        .catch(error => {
+            console.log("ths is acutal error: ", error.name)
+            next(error)
+        })
 })
 
 app.get('/api/persons', (req, res) => {
@@ -72,29 +64,17 @@ app.get('/api/persons/:id', (req, res) => {
         .catch(err => console.log(err))
 })
 
-app.put('/api/persons/:id', (req, res) => {
-    console.log("req.body: ", req.body)
-    console.log("req.params.id ", req.params.id)
+app.put('/api/persons/:id', (req, res, next) => {
 
     var query = { _id: req.params.id }
     Persons.findOneAndUpdate(query, req.body, { new: true, runValidators: true, context: 'query' }, function (err, doc) {
-        if (err) { return res.status(500).json("error: ", err) }
-        if (doc === null) {
-            console.log("should have been error", doc)
+        if (err) { return next(err) }
+        else if (doc === null) {
             return res.status(500).json("should have been error")
         }
         res.send("created succesfully")
     });
-    // Persons.findOne({ id: req.params.id }).then(doc => {
-    //     doc["number"] = req.body.number;
-    //     doc.save();
-    //     res.json(req.body)
-    // }).catch(err => {
-    //     console.log('Oh! no', err)
-    // });
 })
-
-
 
 app.delete('/api/persons/:id', (request, response, next) => {
 
@@ -102,8 +82,23 @@ app.delete('/api/persons/:id', (request, response, next) => {
         .then(result => {
             response.status(204).end()
         })
-        .catch(error => { next(error) })
+        .catch(error => {
+            console.log("already deleted")
+            next(error)
+        })
+
 })
+//must call errorhandler middleware after routes 
+const errorHandler = (error, req, res, next) => {
+    if (error.name === 'CastError') {
+        return res.status(400).send({ error: 'malformatted id' })
+    } else if (error.name === 'ValidationError') {
+        return res.status(403).json({ error: error.message })
+    }
+    next(error)
+}
+
+app.use(errorHandler)
 
 const PORT = process.env.PORT || 3001
 app.listen(PORT, () => {
