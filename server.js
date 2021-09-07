@@ -1,6 +1,6 @@
 const express = require('express')
 const cors = require('cors')
-var morgan = require('morgan')
+//var morgan = require('morgan')
 const app = express()
 app.use(express.static('build'))
 app.use(express.json())
@@ -16,7 +16,7 @@ app.post('/api/persons', (req, res, next) => {
     const body = req.body
 
     if (body.name === undefined || body.number === undefined) {
-        return response.status(400).json({ error: 'number or name is missing' })
+        return res.status(400).json({ error: 'number or name is missing' })
     }
 
     const person = new Persons({
